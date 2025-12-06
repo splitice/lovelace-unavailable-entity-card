@@ -42,6 +42,7 @@ A lightweight Lovelace custom card that highlights entities reporting `unavailab
 ```yaml
 type: custom:unavailable-entity-card
 title: Critical sensors
+expanded: false
 entities:
   - sensor.living_room_temperature
   - entity: binary_sensor.garage_door
@@ -61,6 +62,7 @@ unavailable_states:
 | `entities` | array | _(required)_ | Entities to monitor. Objects support `entity`, `name`, `icon`. |
 | `unavailable_states` | string or array | `['unavailable', 'unknown']` | Additional state values that count as unavailable. |
 | `show_header` | boolean | `true` | Hide the header entirely when set to `false`. |
+| `expanded` | boolean | `true` | Whether the card is expanded by default. Set to `false` to start collapsed. |
 
 ## Development
 

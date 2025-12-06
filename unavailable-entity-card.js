@@ -33,7 +33,9 @@ class UnavailableEntityCard extends HTMLElement {
       entities: config.entities.map((entry) => (typeof entry === "string" ? { entity: entry } : entry))
     };
 
-    this._collapsed = false;
+    // expanded defaults to true, so collapsed is the inverse
+    const expanded = config.expanded !== undefined ? config.expanded : true;
+    this._collapsed = !expanded;
     this._unavailableStates = this._buildUnavailableStates(config.unavailable_states);
     this._entities = this._calculateEntities();
     this._render();
