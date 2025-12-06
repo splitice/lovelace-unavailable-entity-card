@@ -2,6 +2,10 @@
 
 A lightweight Lovelace custom card that highlights entities reporting `unavailable` or `unknown`, keeping the native Home Assistant tile look.
 
+![](/screenshots/screenshot.png)
+
+![](/screenshots/screenshot-collepsed.png)
+
 ## Features
 
 - Monitors a provided list of entities and only renders those that are offline
