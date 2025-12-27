@@ -13,6 +13,7 @@ class UnavailableEntityCard extends HTMLElement {
     this._entities = [];
     this._collapsed = false;
     this._unavailableStates = DEFAULT_UNAVAILABLE_STATES;
+    this._stateColors = {};
   }
 
   static getStubConfig() {
@@ -36,14 +37,18 @@ class UnavailableEntityCard extends HTMLElement {
     // expanded defaults to true, so collapsed is the inverse
     const expanded = config.expanded !== undefined ? config.expanded : true;
     this._collapsed = !expanded;
-    this._unavailableStates = this._buildUnavailableStates(config.unavailable_states);
+    const unavailableConfig = this._buildUnavailableConfig(config.unavailable_states);
+    this._unavailableStates = unavailableConfig.states;
+    this._stateColors = unavailableConfig.colors;
     this._entities = this._calculateEntities();
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    this._unavailableStates = this._buildUnavailableStates(this._config?.unavailable_states);
+    const unavailableConfig = this._buildUnavailableConfig(this._config?.unavailable_states);
+    this._unavailableStates = unavailableConfig.states;
+    this._stateColors = unavailableConfig.colors;
     this._entities = this._calculateEntities();
     this._render();
   }
@@ -105,25 +110,151 @@ class UnavailableEntityCard extends HTMLElement {
     return output;
   }
 
-  _buildUnavailableStates(customStates) {
+  _buildUnavailableConfig(customStates) {
     const states = new Set(DEFAULT_UNAVAILABLE_STATES);
-    if (!customStates) {
-      return states;
+    const colors = {};
+
+    const registerState = (stateKey, styleSource) => {
+      const state = typeof stateKey === "string" ? stateKey.trim() : "";
+      if (!state) {
+        return;
+      }
+      states.add(state);
+      this._setStateStyle(colors, state, styleSource);
+    };
+
+    const collectStates = (stateField) => {
+      if (Array.isArray(stateField)) {
+        return stateField.map((value) => (typeof value === "string" ? value.trim() : "")).filter(Boolean);
+      }
+      if (typeof stateField === "string") {
+        const trimmed = stateField.trim();
+        return trimmed ? [trimmed] : [];
+      }
+      return [];
+    };
+
+    const normalizeEntryStyle = (entry) => {
+      if (!entry || typeof entry !== "object") {
+        return undefined;
+      }
+      return {
+        background: entry.background,
+        color: entry.color,
+        border: entry.border,
+        value: entry.value
+      };
+    };
+
+    if (typeof customStates === "string") {
+      registerState(customStates, undefined);
+    } else if (Array.isArray(customStates)) {
+      customStates.forEach((entry) => {
+        if (typeof entry === "string") {
+          registerState(entry, undefined);
+          return;
+        }
+
+        if (!entry || typeof entry !== "object") {
+          return;
+        }
+
+        const statesFromEntry = collectStates(entry.state).concat(collectStates(entry.states));
+        if (statesFromEntry.length === 0) {
+          return;
+        }
+
+        const styleSource = normalizeEntryStyle(entry);
+        statesFromEntry.forEach((stateValue) => registerState(stateValue, styleSource));
+      });
+    } else if (customStates && typeof customStates === "object") {
+      Object.entries(customStates).forEach(([stateKey, value]) => {
+        if (value === undefined || value === null || typeof value === "boolean") {
+          if (value !== false) {
+            registerState(stateKey, undefined);
+          }
+          return;
+        }
+
+        if (typeof value === "string") {
+          registerState(stateKey, { value });
+          return;
+        }
+
+        registerState(stateKey, value);
+      });
     }
 
-    if (typeof customStates === "string" && customStates.trim()) {
-      states.add(customStates.trim());
-      return states;
+    return { states, colors };
+  }
+
+  _setStateStyle(target, stateKey, styleSource) {
+    const style = this._normalizeStateStyle(styleSource);
+    if (!style) {
+      return;
+    }
+    target[stateKey] = style;
+  }
+
+  _normalizeStateStyle(styleSource) {
+    if (typeof styleSource === "string") {
+      const backgroundOnly = styleSource.trim();
+      return backgroundOnly ? { background: backgroundOnly } : undefined;
     }
 
-    if (Array.isArray(customStates)) {
-      customStates
-        .map((value) => (typeof value === "string" ? value.trim() : ""))
-        .filter(Boolean)
-        .forEach((value) => states.add(value));
+    if (!styleSource || typeof styleSource !== "object") {
+      return undefined;
     }
 
-    return states;
+    const valueAlias = typeof styleSource.value === "string" ? styleSource.value.trim() : undefined;
+    const background = typeof styleSource.background === "string" ? styleSource.background.trim() : valueAlias;
+    const color = typeof styleSource.color === "string" ? styleSource.color.trim() : undefined;
+    const border = typeof styleSource.border === "string" ? styleSource.border.trim() : undefined;
+
+    const normalized = {};
+    if (background) {
+      normalized.background = background;
+    }
+    if (color) {
+      normalized.color = color;
+    }
+    if (border) {
+      normalized.border = border;
+    }
+
+    return Object.keys(normalized).length ? normalized : undefined;
+  }
+
+  _getStateStyle(state) {
+    if (!state) {
+      return "";
+    }
+
+    const config = this._stateColors[state];
+    if (!config) {
+      return "";
+    }
+
+    return this._formatStateStyle(config);
+  }
+
+  _formatStateStyle(config) {
+    if (!config) {
+      return "";
+    }
+
+    const styles = [];
+    if (config.background) {
+      styles.push(`background:${this._escapeAttribute(config.background)}`);
+    }
+    if (config.color) {
+      styles.push(`color:${this._escapeAttribute(config.color)}`);
+    }
+    if (config.border) {
+      styles.push(`border:${this._escapeAttribute(config.border)}`);
+    }
+
+    return styles.join("; ");
   }
 
   _render() {
@@ -179,6 +310,8 @@ class UnavailableEntityCard extends HTMLElement {
     const items = this._entities
       .map((entity) => {
         const stateClass = entity.missing ? "entity-state missing" : "entity-state";
+        const stateStyle = this._getStateStyle(entity.state);
+        const styleAttribute = stateStyle ? ` style="${stateStyle}"` : "";
         return `
           <div class="entity-tile" role="listitem" data-entity="${this._escapeAttribute(entity.id)}" data-missing="${entity.missing ? "true" : "false"}">
             ${this._renderEntityVisual(entity)}
@@ -186,7 +319,7 @@ class UnavailableEntityCard extends HTMLElement {
               <p class="entity-name">${this._escapeHtml(entity.name)}</p>
               <p class="entity-id">${this._escapeHtml(entity.id)}</p>
             </div>
-            <span class="${stateClass}">${this._escapeHtml(entity.state)}</span>
+            <span class="${stateClass}"${styleAttribute}>${this._escapeHtml(entity.state)}</span>
           </div>
         `;
       })

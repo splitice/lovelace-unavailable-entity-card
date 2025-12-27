@@ -11,7 +11,7 @@ A lightweight Lovelace custom card that highlights entities reporting `unavailab
 - Monitors a provided list of entities and only renders those that are offline
 - Shows friendly name, entity id, current state chip, and entity icon/picture when available
 - Gracefully flags entities missing from Home Assistant as `not available`
-- Supports custom state strings via `unavailable_states`
+- Supports custom state strings via `unavailable_states`, including per-state badge colors
 - Collapsible header lets you hide the list once you have reviewed it
 - Works as a single JavaScript file, no build tools required
 
@@ -50,8 +50,15 @@ entities:
     icon: mdi:garage
   - sensor.ups_status
 unavailable_states:
-  - offline
-  - error
+  - state: offline
+    background: "#f0f4c3"
+    color: "#827717"
+  - state: error
+  - state: unavailable
+    background: "rgba(255, 0, 0, 0.18)"
+    color: "#b71c1c"
+  - state: unknown
+    value: "#fff59d"
 ```
 
 ### Options
@@ -60,9 +67,19 @@ unavailable_states:
 |--------|------|---------|-------------|
 | `title` | string | `Unavailable entities` | Card header text. Set `show_header: false` to hide. |
 | `entities` | array | _(required)_ | Entities to monitor. Objects support `entity`, `name`, `icon`. |
-| `unavailable_states` | string or array | `['unavailable', 'unknown']` | Additional state values that count as unavailable. |
+| `unavailable_states` | string, array, or object | `['unavailable', 'unknown']` | Extend unavailable states. Accepts strings or objects with `state` plus optional `background`, `color`, `border`, or `value` (alias for `background`). |
 | `show_header` | boolean | `true` | Hide the header entirely when set to `false`. |
 | `expanded` | boolean | `true` | Whether the card is expanded by default. Set to `false` to start collapsed. |
+
+### Styling states
+
+Define badge colors inline with each `unavailable_states` entry. Accepted formats:
+
+- **String:** shorthand for `background` only (`unknown: "#fff59d"`).
+- **Object:** set any combination of `background`, `color`, `border`, or `value` (alias for `background`).
+- **Array/object:** supply multiple entries; each must contain a `state` key (string or list) alongside the style fields above.
+
+All values are inserted as inline styles, so you can use plain colors, CSS variables, or gradients.
 
 ## Development
 
