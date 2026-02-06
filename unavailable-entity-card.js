@@ -615,34 +615,26 @@ class UnavailableEntityCard extends HTMLElement {
   }
 }
 
-// Register custom element
-if (!customElements.get(ELEMENT_TAG)) {
-  customElements.define(ELEMENT_TAG, UnavailableEntityCard);
-  console.info(
-    `%c UNAVAILABLE-ENTITY-CARD %c Element registered `,
-    'color: orange; font-weight: bold; background: black',
-    'color: white; font-weight: bold; background: dimgray'
-  );
-}
+// Immediately register custom element - must happen synchronously
+customElements.define(ELEMENT_TAG, UnavailableEntityCard);
 
-// Register card for Home Assistant
-const cardEntry = {
+// Register card metadata for Home Assistant
+window.customCards = window.customCards || [];
+window.customCards.push({
   type: CARD_TYPE,
   name: "Unavailable Entity Card",
   description: "Tile-style list of unavailable or unknown entities.",
   preview: true
-};
+});
 
-if (!window.customCards) {
-  window.customCards = [];
-}
-
-const exists = window.customCards.some((card) => card.type === cardEntry.type);
-if (!exists) {
-  window.customCards.push(cardEntry);
-  console.info(
-    `%c UNAVAILABLE-ENTITY-CARD %c Card registered to window.customCards `,
-    'color: orange; font-weight: bold; background: black',
-    'color: white; font-weight: bold; background: dimgray'
-  );
-}
+// Log successful registration
+console.info(
+  `%c UNAVAILABLE-ENTITY-CARD \n` +
+  `%c Element: ${ELEMENT_TAG} \n` +
+  `%c Type: ${CARD_TYPE} \n` +
+  `%c Registered: ${customElements.get(ELEMENT_TAG) ? 'YES' : 'NO'}`,
+  'color: orange; font-weight: bold; background: black',
+  'color: white; background: dimgray',
+  'color: white; background: dimgray',
+  'color: lime; background: dimgray; font-weight: bold'
+);
