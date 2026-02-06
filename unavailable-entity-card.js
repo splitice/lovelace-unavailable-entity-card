@@ -24,6 +24,12 @@ class UnavailableEntityCard extends HTMLElement {
     };
   }
 
+  static getConfigElement() {
+    // Return null to indicate no visual editor is available
+    // Users can still configure the card via YAML
+    return null;
+  }
+
   setConfig(config) {
     if (!config || !Array.isArray(config.entities) || config.entities.length === 0) {
       throw new Error("You need to define entities");
