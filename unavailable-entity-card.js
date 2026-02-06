@@ -615,10 +615,17 @@ class UnavailableEntityCard extends HTMLElement {
   }
 }
 
+// Register custom element
 if (!customElements.get(ELEMENT_TAG)) {
   customElements.define(ELEMENT_TAG, UnavailableEntityCard);
+  console.info(
+    `%c UNAVAILABLE-ENTITY-CARD %c Element registered `,
+    'color: orange; font-weight: bold; background: black',
+    'color: white; font-weight: bold; background: dimgray'
+  );
 }
 
+// Register card for Home Assistant
 const cardEntry = {
   type: CARD_TYPE,
   name: "Unavailable Entity Card",
@@ -626,11 +633,16 @@ const cardEntry = {
   preview: true
 };
 
-if (window.customCards) {
-  const exists = window.customCards.some((card) => card.type === cardEntry.type);
-  if (!exists) {
-    window.customCards.push(cardEntry);
-  }
-} else {
-  window.customCards = [cardEntry];
+if (!window.customCards) {
+  window.customCards = [];
+}
+
+const exists = window.customCards.some((card) => card.type === cardEntry.type);
+if (!exists) {
+  window.customCards.push(cardEntry);
+  console.info(
+    `%c UNAVAILABLE-ENTITY-CARD %c Card registered to window.customCards `,
+    'color: orange; font-weight: bold; background: black',
+    'color: white; font-weight: bold; background: dimgray'
+  );
 }
