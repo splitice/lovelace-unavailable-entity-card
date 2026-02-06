@@ -1,3 +1,4 @@
+(() => {
 const CARD_TYPE = "custom:unavailable-entity-card";
 const ELEMENT_TAG = "unavailable-entity-card";
 const DEFAULT_ICON = "mdi:alert-circle-outline";
@@ -615,26 +616,31 @@ class UnavailableEntityCard extends HTMLElement {
   }
 }
 
-// Immediately register custom element - must happen synchronously
-customElements.define(ELEMENT_TAG, UnavailableEntityCard);
+// Register custom element - check first to avoid errors if loaded multiple times
+if (!customElements.get(ELEMENT_TAG)) {
+  customElements.define(ELEMENT_TAG, UnavailableEntityCard);
+}
 
 // Register card metadata for Home Assistant
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: CARD_TYPE,
-  name: "Unavailable Entity Card",
-  description: "Tile-style list of unavailable or unknown entities.",
-  preview: true
-});
+if (!window.customCards.some((card) => card.type === CARD_TYPE)) {
+  window.customCards.push({
+    type: CARD_TYPE,
+    name: "Unavailable Entity Card",
+    description: "Tile-style list of unavailable or unknown entities.",
+    preview: true
+  });
+}
 
 // Log successful registration
 console.info(
-  `%c UNAVAILABLE-ENTITY-CARD \n` +
-  `%c Element: ${ELEMENT_TAG} \n` +
-  `%c Type: ${CARD_TYPE} \n` +
-  `%c Registered: ${customElements.get(ELEMENT_TAG) ? 'YES' : 'NO'}`,
+  `%c UNAVAILABLE-ENTITY-CARD %c v1.1.0 loaded`,
   'color: orange; font-weight: bold; background: black',
-  'color: white; background: dimgray',
-  'color: white; background: dimgray',
-  'color: lime; background: dimgray; font-weight: bold'
+  'color: white; background: dimgray; font-weight: bold'
 );
+console.info(
+  `Element: ${ELEMENT_TAG}, Type: ${CARD_TYPE}, ` +
+  `Registered: ${customElements.get(ELEMENT_TAG) ? 'YES ✅' : 'NO ❌'}`
+);
+
+})();
