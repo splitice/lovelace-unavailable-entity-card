@@ -1,3 +1,4 @@
+(() => {
 const CARD_TYPE = "custom:unavailable-entity-card";
 const ELEMENT_TAG = "unavailable-entity-card";
 const DEFAULT_ICON = "mdi:alert-circle-outline";
@@ -22,6 +23,12 @@ class UnavailableEntityCard extends HTMLElement {
       title: "Unavailable Entities",
       entities: ["light.living_room", "sensor.kitchen_temperature"]
     };
+  }
+
+  static getConfigElement() {
+    // Return null to indicate no visual editor is available
+    // Users can still configure the card via YAML
+    return null;
   }
 
   setConfig(config) {
@@ -609,22 +616,31 @@ class UnavailableEntityCard extends HTMLElement {
   }
 }
 
+// Register custom element - check first to avoid errors if loaded multiple times
 if (!customElements.get(ELEMENT_TAG)) {
   customElements.define(ELEMENT_TAG, UnavailableEntityCard);
 }
 
-const cardEntry = {
-  type: CARD_TYPE,
-  name: "Unavailable Entity Card",
-  description: "Tile-style list of unavailable or unknown entities.",
-  preview: true
-};
-
-if (window.customCards) {
-  const exists = window.customCards.some((card) => card.type === cardEntry.type);
-  if (!exists) {
-    window.customCards.push(cardEntry);
-  }
-} else {
-  window.customCards = [cardEntry];
+// Register card metadata for Home Assistant
+window.customCards = window.customCards || [];
+if (!window.customCards.some((card) => card.type === CARD_TYPE)) {
+  window.customCards.push({
+    type: CARD_TYPE,
+    name: "Unavailable Entity Card",
+    description: "Tile-style list of unavailable or unknown entities.",
+    preview: true
+  });
 }
+
+// Log successful registration
+console.info(
+  `%c UNAVAILABLE-ENTITY-CARD %c v1.1.0 loaded`,
+  'color: orange; font-weight: bold; background: black',
+  'color: white; background: dimgray; font-weight: bold'
+);
+console.info(
+  `Element: ${ELEMENT_TAG}, Type: ${CARD_TYPE}, ` +
+  `Registered: ${customElements.get(ELEMENT_TAG) ? 'YES ✅' : 'NO ❌'}`
+);
+
+})();
